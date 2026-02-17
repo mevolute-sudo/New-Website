@@ -77,7 +77,7 @@ export const Navbar = () => {
               <img 
                 src="https://customer-assets.emergentagent.com/job_cursor-char-motion/artifacts/ke8fiy4w_Logo%20evol.png" 
                 alt="Evolute Marketing" 
-                className="h-10 w-auto brightness-0 invert"
+                className="h-16 w-auto brightness-0 invert"
               />
             </motion.a>
 
