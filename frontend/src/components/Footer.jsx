@@ -48,15 +48,14 @@ export const Footer = () => {
                 e.preventDefault();
                 scrollToSection('#home');
               }}
-              className="flex items-center gap-2"
+              className="flex items-center"
               data-hover
             >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <span className="text-white font-heading font-bold text-lg">E</span>
-              </div>
-              <span className="font-heading font-bold text-xl text-white">
-                Evolute
-              </span>
+              <img 
+                src="https://customer-assets.emergentagent.com/job_cursor-char-motion/artifacts/ke8fiy4w_Logo%20evol.png" 
+                alt="Evolute Marketing" 
+                className="h-10 w-auto"
+              />
             </a>
             
             <p className="text-slate-400 leading-relaxed max-w-sm">

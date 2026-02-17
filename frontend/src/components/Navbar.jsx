@@ -70,23 +70,15 @@ export const Navbar = () => {
                 e.preventDefault();
                 scrollToSection('#home');
               }}
-              className="flex items-center gap-2"
+              className="flex items-center"
               whileHover={{ scale: 1.05 }}
               data-hover
             >
-              <div className="relative">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                  <span className="text-white font-heading font-bold text-lg">E</span>
-                </div>
-                <motion.div
-                  className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-accent opacity-50 blur-lg"
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.3, 0.5] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              </div>
-              <span className="font-heading font-bold text-xl text-white hidden sm:block">
-                Evolute
-              </span>
+              <img 
+                src="https://customer-assets.emergentagent.com/job_cursor-char-motion/artifacts/ke8fiy4w_Logo%20evol.png" 
+                alt="Evolute Marketing" 
+                className="h-10 w-auto"
+              />
             </motion.a>
 
             {/* Desktop Navigation */}
