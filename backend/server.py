@@ -1,12 +1,12 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
 
@@ -28,7 +28,7 @@ api_router = APIRouter(prefix="/api")
 
 # Define Models
 class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
+    model_config = ConfigDict(extra="ignore")
     
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     client_name: str
@@ -37,34 +37,101 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
-# Add your routes to the router instead of directly to app
+
+class ContactForm(BaseModel):
+    name: str
+    email: EmailStr
+    company: Optional[str] = None
+    service: Optional[str] = None
+    message: str
+
+
+class ContactSubmission(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    email: str
+    company: Optional[str] = None
+    service: Optional[str] = None
+    message: str
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    status: str = "new"
+
+
+class ContactResponse(BaseModel):
+    success: bool
+    message: str
+    id: Optional[str] = None
+
+
+# Routes
 @api_router.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Evolute Marketing API"}
+
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
     status_dict = input.model_dump()
     status_obj = StatusCheck(**status_dict)
     
-    # Convert to dict and serialize datetime to ISO string for MongoDB
     doc = status_obj.model_dump()
     doc['timestamp'] = doc['timestamp'].isoformat()
     
     _ = await db.status_checks.insert_one(doc)
     return status_obj
 
+
 @api_router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
     status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
     
-    # Convert ISO string timestamps back to datetime objects
     for check in status_checks:
         if isinstance(check['timestamp'], str):
             check['timestamp'] = datetime.fromisoformat(check['timestamp'])
     
     return status_checks
+
+
+@api_router.post("/contact", response_model=ContactResponse)
+async def submit_contact_form(form: ContactForm):
+    """Submit a contact form inquiry"""
+    try:
+        submission = ContactSubmission(
+            name=form.name,
+            email=form.email,
+            company=form.company,
+            service=form.service,
+            message=form.message
+        )
+        
+        doc = submission.model_dump()
+        doc['timestamp'] = doc['timestamp'].isoformat()
+        
+        await db.contact_submissions.insert_one(doc)
+        
+        return ContactResponse(
+            success=True,
+            message="Thank you for your message! We'll get back to you within 24 hours.",
+            id=submission.id
+        )
+    except Exception as e:
+        logging.error(f"Error submitting contact form: {e}")
+        raise HTTPException(status_code=500, detail="Failed to submit contact form")
+
+
+@api_router.get("/contacts", response_model=List[ContactSubmission])
+async def get_contact_submissions():
+    """Get all contact form submissions (admin endpoint)"""
+    submissions = await db.contact_submissions.find({}, {"_id": 0}).to_list(1000)
+    
+    for submission in submissions:
+        if isinstance(submission.get('timestamp'), str):
+            submission['timestamp'] = datetime.fromisoformat(submission['timestamp'])
+    
+    return submissions
+
 
 # Include the router in the main app
 app.include_router(api_router)
